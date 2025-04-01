@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>圣经阅读</title>
+    <link href="/static/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .bible-content {
+            font-size: 1.1em;
+            line-height: 1.8;
+        }
+        .verse-number {
+            font-size: 0.8em;
+            color: #666;
+            margin-right: 5px;
+        }
+        .nav-buttons {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+        }
+        .font-size-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+        }
+        .verse.selected {
+            background-color: #e6f3ff;
+            border-radius: 3px;
+            padding: 2px 4px;
+            margin: -2px -4px;
+        }
+        .chapter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .chapter-button {
+            min-width: 45px;
+            padding: 5px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row mt-3">
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <!-- <h5 class="card-title">导航</h5> -->
+                        <select class="form-select mb-3" id="bookSelect">
+                            <!-- <option value="">选择书卷</option> -->
+                        </select>
+                        <div class="mb-3" id="chapterSelect">
+                            <!-- 章节按钮组将在这里动态生成 -->
+                        </div>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="searchInput" placeholder="搜索经文...">
+                            <button class="btn btn-outline-secondary" type="button" id="searchButton">搜索</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <div class="card">
+                    <div class="card-body bible-content" id="bibleContent">
+                        请选择要阅读的书卷和章节
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-buttons">
+        <button class="btn btn-outline-primary me-2" id="prevChapter">上一章</button>
+        <button class="btn btn-outline-primary" id="nextChapter">下一章</button>
+    </div>
+
+    <div class="font-size-controls">
+        <button class="btn btn-sm btn-outline-secondary me-2" id="decreaseFont">A-</button>
+        <button class="btn btn-sm btn-outline-secondary" id="increaseFont">A+</button>
+    </div>
+
+    <!-- 注解弹出框 -->
+    <div class="modal fade" id="annotationModal" tabindex="-1" aria-labelledby="annotationModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="annotationModalLabel">经文注解</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="annotationContent">
+                    <!-- 注解内容将在这里动态显示 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 提问弹出框 -->
+    <div class="modal fade" id="questionModal" tabindex="-1" aria-labelledby="questionModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="questionModalLabel">提问</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="selectedVerses" class="mb-3">
+                        <!-- 选中的经文将在这里显示 -->
+                    </div>
+                    <div class="mb-3">
+                        <label for="questionInput" class="form-label">您的问题：</label>
+                        <textarea class="form-control" id="questionInput" rows="3"></textarea>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="submitQuestion">提交问题</button>
+                    <div id="answerContent" class="mt-3">
+                        <!-- 回答将在这里显示 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 经文选择菜单 -->
+    <div class="dropdown-menu" id="verseContextMenu">
+        <a class="dropdown-item" href="#" id="annotationBtn">注解</a>
+        <a class="dropdown-item" href="#" id="questionBtn">提问</a>
+    </div>
+
+    <script src="/static/marked.min.js"></script>
+    <script src="/static/bootstrap.min.js"></script>
+    <script src="/static/js/script.js"></script>
+    <style>
+        #annotationContent {
+            padding: 15px;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        #annotationContent p {
+            margin-bottom: 0.8em;
+            text-indent: 2em;
+            line-height: 1.8;
+        }
+        #annotationContent h1 {
+            font-size: 1.4em;
+            margin-top: 1em;
+            margin-bottom: 0.5em;
+            color: #333;
+        }
+        #annotationContent h2 {
+            font-size: 1.2em;
+            margin-top: 0.8em;
+            margin-bottom: 0.4em;
+            color: #333;
+        }
+        #annotationContent h3 {
+            font-size: 1.1em;
+            margin-top: 0.6em;
+            margin-bottom: 0.3em;
+            color: #333;
+        }
+        #annotationContent ul, #annotationContent ol {
+            padding-left: 2em;
+            margin-bottom: 0.8em;
+        }
+        #annotationContent li {
+            margin-bottom: 0.3em;
+        }
+        #annotationContent blockquote {
+            border-left: 4px solid #ddd;
+            padding: 0.5em 1em;
+            margin: 0.8em 0;
+            color: #666;
+            background-color: #f9f9f9;
+            font-size: 0.95em;
+        }
+    </style>
+</body>
+</html>
