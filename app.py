@@ -74,11 +74,11 @@ def get_annotation():
     
     def generate():
         try:
-            # 调用OpenAI API获取注解
+            # 调用OpenAI API获取注解，直接返回HTML格式
             response = client.chat.completions.create(
                 model="ep-20250327141820-mfncl",
                 messages=[
-                    {"role": "system", "content": "你是一个专业的圣经学者，请对所给经文进行详细的解释和注解。请使用markdown格式输出，包括：\n1. 使用标题层级来组织内容\n2. 使用段落和换行来提高可读性\n3. 使用引用来标注重要内容\n4. 适当使用列表来组织要点"},
+                    {"role": "system", "content": "你是一个专业的圣经学者，请对所给经文进行详细的解经和释经。请直接以HTML格式输出，使用适当的HTML标签如<p>、<h1>、<h2>、<ul>、<li>等来格式化你的回答。注意段落和换行的处理。"},
                     {"role": "user", "content": f"请对以下经文进行注解：\n{verses_text}"}
                 ],
                 stream=True
@@ -110,11 +110,11 @@ def ask_question():
     
     def generate():
         try:
-            # 调用OpenAI API获取答案
+            # 调用OpenAI API获取答案，直接返回HTML格式
             response = client.chat.completions.create(
                 model="ep-20250327141820-mfncl",
                 messages=[
-                    {"role": "system", "content": "你是一个专业的圣经学者，请基于所给经文回答问题。"},
+                    {"role": "system", "content": "你是一个专业的圣经学者，请基于所给经文回答问题。请直接以HTML格式输出，使用适当的HTML标签如<p>、<h1>、<h2>、<ul>、<li>等来格式化你的回答。注意段落和换行的处理。"},
                     {"role": "user", "content": f"基于以下经文：\n{verses_text}\n\n回答问题：{question}"}
                 ],
                 stream=True

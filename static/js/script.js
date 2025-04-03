@@ -90,7 +90,7 @@ async function loadVerses(volumeSn, chapterSn) {
         // 为每个经文添加点击事件
         document.querySelectorAll('.verse').forEach(verse => {
             verse.addEventListener('click', handleVerseClick);
-            verse.addEventListener('contextmenu', handleVerseContextMenu);
+            // 移除右键菜单事件，使用底部固定菜单代替
         });
     } catch (error) {
         console.error('加载经文失败:', error);
@@ -116,23 +116,26 @@ function handleVerseClick(event) {
               v.verseSn === verse.dataset.verseSn)
         );
     }
+    
+    // 更新底部菜单显示状态
+    updateActionMenuVisibility();
 }
 
-// 处理经文右键菜单
-function handleVerseContextMenu(event) {
-    event.preventDefault();
-    const contextMenu = document.getElementById('verseContextMenu');
-    contextMenu.style.display = 'block';
-    contextMenu.style.left = `${event.pageX}px`;
-    contextMenu.style.top = `${event.pageY}px`;
+// 更新底部操作菜单的显示状态
+function updateActionMenuVisibility() {
+    const actionMenu = document.getElementById('verseActionMenu');
+    if (selectedVerses.length > 0) {
+        actionMenu.style.display = 'block';
+    } else {
+        actionMenu.style.display = 'none';
+    }
 }
 
-// 初始化右键菜单事件
+
+// 不再需要右键菜单处理函数，因为我们使用底部固定菜单
+
+// 初始化菜单事件
 document.addEventListener('DOMContentLoaded', () => {
-    // 点击其他地方关闭右键菜单
-    document.addEventListener('click', () => {
-        document.getElementById('verseContextMenu').style.display = 'none';
-    });
 
     // 注解按钮点击事件
     document.getElementById('annotationBtn').addEventListener('click', () => {
@@ -143,31 +146,17 @@ document.addEventListener('DOMContentLoaded', () => {
         annotationContent.innerHTML = '<div class="loading-text">正在生成注解...</div>';
         annotationModal.show();
 
-        // 配置marked选项
-        marked.setOptions({
-            gfm: true,           // 启用GitHub风格Markdown
-            breaks: true,        // 转换换行符为 <br>
-            sanitize: false,     // 允许HTML标签
-            smartLists: true,    // 优化列表输出
-            smartypants: true,   // 优化标点符号
-            xhtml: true          // 使用xhtml标准
-        });
-
-        let annotationText = '';
+        // 直接使用HTML输出，不再需要marked库
+        let annotationHtml = '';
         const eventSource = new EventSource('/api/annotation?' + new URLSearchParams({
             verses: JSON.stringify(selectedVerses)
         }));
 
         eventSource.onmessage = (event) => {
             if (event.data) {
-                annotationText += event.data;
-                // 使用marked将markdown文本转换为HTML并显示
-                try {
-                    const renderedHtml = marked.parse(annotationText);
-                    annotationContent.innerHTML = renderedHtml;
-                } catch (error) {
-                    console.error('解析注解内容失败:', error);
-                }
+                // 直接将接收到的数据作为HTML添加到内容中
+                annotationHtml += event.data;
+                annotationContent.innerHTML = annotationHtml;
             }
         };
 
@@ -209,8 +198,15 @@ document.addEventListener('DOMContentLoaded', () => {
             question: question
         }));
 
+        // 使用变量累积接收到的HTML内容，然后一次性设置innerHTML
+        let answerHtml = '';
         eventSource.onmessage = (event) => {
-            document.getElementById('answerContent').innerHTML += event.data;
+            if (event.data) {
+                // 累积接收到的数据
+                answerHtml += event.data;
+                // 设置innerHTML以正确渲染HTML
+                document.getElementById('answerContent').innerHTML = answerHtml;
+            }
         };
 
         eventSource.onerror = () => {
